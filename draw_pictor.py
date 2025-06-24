@@ -5,32 +5,32 @@ import os
 import numpy as np
 
 def plot_asset_value_over_time(AllAsset):
-    # 设置seaborn风格
+    # Set seaborn style
     sns.set(style="whitegrid")
 
-    # 创建图表
+    # Create figure
     plt.figure(figsize=(10, 6))
 
-    # 绘制折线图
+    # Plot asset value line chart
     plt.plot(AllAsset.index, AllAsset.values, color='skyblue', linestyle='-', marker='o', markersize=3)
 
-    # 添加标题和标签
+    # Add title and axis labels
     plt.title('Asset Value Over Time', fontsize=16)
     plt.xlabel('Index', fontsize=14)
     plt.ylabel('Asset Value', fontsize=14)
 
-    # 显示图例
+    # Show legend
     plt.legend(['Asset Value'], loc='upper left', fontsize=12)
 
-    # 显示图表
+    # Show plot
     plt.show()
 
-def plot_assets_and_cash(assets_dict, cash_dict,name):
-    # 将字典转换为DataFrame以便绘图
+def plot_assets_and_cash(assets_dict, cash_dict, name):
+    # Convert dictionaries to DataFrames for plotting
     assets_df = pd.DataFrame.from_dict(assets_dict, orient='index', columns=['Assets'])
     cash_df = pd.DataFrame.from_dict(cash_dict, orient='index', columns=['Cash'])
 
-    # 绘制资产和现金的图像
+    # Plot assets and cash over time
     plt.figure(figsize=(12, 6))
     plt.plot(assets_df.index, assets_df['Assets'], label='Assets')
     plt.plot(cash_df.index, cash_df['Cash'], label='Cash')
@@ -42,13 +42,13 @@ def plot_assets_and_cash(assets_dict, cash_dict,name):
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.show()
-    plt.savefig(name+'.png')
-
+    plt.savefig(name + '.png')
 
 def plot_heatmap_from_files(location):
-    # 获取文件夹下所有文件名
+    # Get all file names in the folder
     file_names = os.listdir(location)
-    # 筛选出所有.npy文件
+    
+    # Filter all .npy files
     npy_files = [file for file in file_names if file.endswith('.npy')]
 
     stock_pair_num = dict()
@@ -57,76 +57,74 @@ def plot_heatmap_from_files(location):
         pairs = np.load(os.path.join(location, npy_file), allow_pickle=True)
 
         for stock_pair in pairs:
-            stock_pair_tuple = tuple(stock_pair)  # 将 numpy 数组转换为元组
-            if stock_pair_tuple in stock_pair_num.keys():
+            stock_pair_tuple = tuple(stock_pair)  # Convert numpy array to tuple
+            if stock_pair_tuple in stock_pair_num:
                 stock_pair_num[stock_pair_tuple] += 1
             else:
                 stock_pair_num[stock_pair_tuple] = 1
 
-    # 创建 DataFrame
+    # Create DataFrame from frequency dictionary
     df = pd.DataFrame(stock_pair_num.values(), index=pd.MultiIndex.from_tuples(stock_pair_num.keys()), columns=['Value'])
 
-    # 重塑数据以绘制热力图
+    # Reshape for heatmap
     heatmap_data = df.unstack().fillna(0)['Value']
     location_parts = location.split('/')
-    # print(location_parts[-2])
-    image_name = location_parts[-3] +' '+location_parts[-2]  # 获取最后一个部分作为图片名称
+    image_name = location_parts[-3] + ' ' + location_parts[-2]  # Use folder name as image title
 
-    # 绘制热力图
+    # Plot heatmap
     plt.figure(figsize=(10, 8))
-    sns.heatmap(heatmap_data, annot=False, cmap='YlGnBu', square=True)  # 将 annot 设置为 False
-    plt.title('Frequency of '+image_name)
+    sns.heatmap(heatmap_data, annot=False, cmap='YlGnBu', square=True)
+    plt.title('Frequency of ' + image_name)
     plt.xlabel('Stock')
     plt.ylabel('Stock')
     plt.show()
 
-
 def plot_trading_signals(account_dict):
-    # 创建 position 文件夹
+    # Create 'position_pic' directory
     os.makedirs('position_pic', exist_ok=True)
 
     for date in account_dict.keys():
-        # 在 position 文件夹下为每个日期创建一个文件夹
+        # Create subfolder under 'position' for each date
         date_folder = os.path.join('position', date)
         os.makedirs(date_folder, exist_ok=True)
 
         for stock_pair in account_dict[date].keys():
             df = account_dict[date][stock_pair]
 
-            # 创建图形和坐标轴
+            # Create figure and axis
             fig, ax = plt.subplots()
 
-            # 绘制 Spread 列
+            # Plot Spread
             ax.plot(df['Spread'], label='Spread', color='blue', linestyle='-')
 
-            # 绘制 position 列
-            ax.plot(df['Position'], label='position', color='green', linestyle='-', alpha=0.5)
+            # Plot Position
+            ax.plot(df['Position'], label='Position', color='green', linestyle='-', alpha=0.5)
 
-            # 绘制 CLOSE 列
+            # Plot CLOSE lines
             ax.plot(df['CLOSE'], label='CLOSE', color='red', linestyle='--')
             ax.plot(-1 * df['CLOSE'], label='CLOSE', color='red', linestyle='--')
 
-            # 绘制 OPEN 列
+            # Plot OPEN lines
             ax.plot(df['OPEN'], label='OPEN', color='orange', linestyle='--')
             ax.plot(-1 * df['OPEN'], label='OPEN', color='orange', linestyle='--')
 
-            # 绘制 STOP 列
+            # Plot STOP lines
             ax.plot(df['STOP'], label='STOP', color='purple', linestyle='--')
             ax.plot(-1 * df['STOP'], label='STOP', color='purple', linestyle='--')
 
-            # 添加图例
+            # Add legend
             ax.legend()
 
-            # 添加标题
+            # Add title
             ax.set_title('Trading Signals')
 
-            # 显示网格
+            # Show grid
             ax.grid(True)
 
-            # 保存图像到对应的日期文件夹
+            # Save figure to the corresponding date folder
             plt.savefig(os.path.join(date_folder, f'{stock_pair}.png'))
 
-            # 关闭图形，以便下一次循环时创建新的图形
+            # Close plot for next iteration
             plt.close()
 
 
